@@ -1,0 +1,49 @@
+server:
+    port: 8081
+
+eureka:
+  client:
+    registerWithEureka: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+
+spring:
+    application:
+        name: gateway-service
+    cloud:
+        gateway:
+            globalcors:
+            # To handle requests like OPTIONS which do not have default URL handler
+            # This states that the same handling should be applied to OPTIONS which is done
+            # for the other methods
+              add-to-simple-url-handler-mapping: true
+              cors-configurations:
+                '[/**]':
+                # Allow all Methods, Headers and restricts the origin
+                # All properties are required otherwise any request with a body will fail
+                  allowedOrigins: "*"
+                  allowedMethods: "*"
+                  allowedHeaders: "*"
+                  
+            # Always end URI with / otherwise, 404 error can happen sometimes
+            routes: 
+            - id: query-service
+              uri: lb://query-service/
+              predicates:
+                - Path=/getAllNewQueries,/getAllPendingQueries,/approveQuery,/insertQuery,/rejectQuery
+            - id: question-service
+              uri: lb://question-service/
+              predicates:
+                - Path=/getAllQuestions,/modifyQuestionByQuery
+            - id: notification-service
+              uri: lb://notification-service/
+              predicates:
+                - Path=/getAllNotifications,/getStudentNotifications
+            
+            discovery:
+              locator:
+                lower-case-service-id: true
+                enabled: true
